@@ -1,7 +1,5 @@
 import Tesseract from 'tesseract.js';
 
-// --- 1. Normalization Utilities ---
-
 export const normalize = (str) => {
   if (!str) return '';
   return str.toLowerCase()
@@ -24,65 +22,50 @@ export const fuzzyMatch = (a, b) => {
   return false;
 };
 
-// --- Smart Date Normalizer ---
-// Converts any date format to YYYYMMDD for comparison
-// Supports: YYYY-MM-DD, DD/MM/YYYY, DD-MM-YYYY, DD.MM.YYYY (NZ/AU format)
 export const normalizeDate = (dateStr) => {
   if (!dateStr) return '';
   
   const clean = dateStr.trim();
   
-  // Extract all numbers from the string
   const numbers = clean.match(/\d+/g);
   if (!numbers || numbers.length < 3) return clean;
   
-  // Get parts and pad them
   let parts = numbers.map(n => n.length <= 2 ? n.padStart(2, '0') : n);
   
   let year, month, day;
   
-  // Check if first part is a year (4 digits)
   if (parts[0].length === 4) {
-    // YYYY-MM-DD format
     year = parts[0];
     month = parts[1];
     day = parts[2] || '01';
   } else {
-    // DD-MM-YYYY or DD/MM/YYYY format (NZ/AU standard)
     day = parts[0];
     month = parts[1];
     year = parts[2];
     
-    // Handle 2-digit year
     if (year.length === 2) {
       const yearNum = parseInt(year);
       year = yearNum <= 30 ? '20' + year : '19' + year;
     }
   }
   
-  // Validate values
   const monthNum = parseInt(month);
   const dayNum = parseInt(day);
   
-  // If month > 12, it's likely swapped (US format MM/DD/YYYY)
   if (monthNum > 12 && dayNum <= 12) {
     [month, day] = [day, month];
   }
   
-  // Validate month range
   if (monthNum < 1 || monthNum > 12) {
     return clean;
   }
   
-  // Validate day range (basic check)
   if (dayNum < 1 || dayNum > 31) {
     return clean;
   }
   
   return `${year}${month.padStart(2, '0')}${day.padStart(2, '0')}`;
 };
-
-// --- 2. OCR Extraction ---
 
 export const extractTextFromImage = async (file, onProgress = () => {}) => {
   const result = await Tesseract.recognize(
@@ -99,7 +82,6 @@ export const extractTextFromImage = async (file, onProgress = () => {}) => {
   return result.data.text;
 };
 
-// --- 3. MRZ Parser (Passport) ---
 const parseMRZ = (text) => {
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
   
@@ -120,7 +102,6 @@ const parseMRZ = (text) => {
   const line1 = mrzLines[0]; 
   const line2 = mrzLines[1]; 
 
-  // Parse Name
   let name = '';
   if (line1.startsWith('P<')) {
     const namePart = line1.substring(2);
@@ -130,10 +111,8 @@ const parseMRZ = (text) => {
     name = `${surname} ${givenNames}`.trim();
   }
 
-  // Parse Passport Number
   const rawPassport = line2.substring(0, 9).replace(/</g, '');
 
-  // Parse DOB
   let dob = '';
   if (line2.length >= 19) {
     const dobRaw = line2.substring(13, 19);
@@ -149,7 +128,6 @@ const parseMRZ = (text) => {
   return { name, passportNumber: rawPassport, dateOfBirth: dob };
 };
 
-// --- 4. Passport Parser ---
 export const parsePassportData = (text) => {
   const mrzData = parseMRZ(text);
   if (mrzData && mrzData.name && mrzData.passportNumber) {
@@ -201,8 +179,6 @@ export const parsePassportData = (text) => {
     if (passportNumber) break;
   }
 
-  // --- DOB Extraction ---
-  // Extract any date-like pattern from the text
   const dobPatterns = [
     /(\d{1,2}[\s/.-]\d{1,2}[\s/.-]\d{2,4})/,
     /(\d{8,})/,
@@ -227,7 +203,6 @@ export const parsePassportData = (text) => {
   };
 };
 
-// --- 5. Driving License Parser (Enhanced) ---
 export const parseDrivingLicenseData = (text) => {
   const lines = text.split('\n').map(line => line.trim()).filter(Boolean);
   
@@ -235,7 +210,6 @@ export const parseDrivingLicenseData = (text) => {
   let licenseNumber = '';
   let dateOfBirth = '';
 
-  // --- Name Extraction ---
   const namePatterns = [
     /(?:name|driver|holder)\s*[:]\s*([A-Z\s]+)/i,
     /1\.?\s*([A-Z]{3,}\s+[A-Z]{3,})/,
@@ -243,7 +217,7 @@ export const parseDrivingLicenseData = (text) => {
   ];
   
   for (const line of lines) {
-    if (/^[0-9<]+$/.test(line) || line.length > 35) continue; // Skip obvious non-name lines
+    if (/^[0-9<]+$/.test(line) || line.length > 35) continue;
 
     for (const pattern of namePatterns) {
       const match = line.match(pattern);
@@ -259,7 +233,6 @@ export const parseDrivingLicenseData = (text) => {
     if (extractedName) break;
   }
   
-  // --- License Number Extraction ---
   const licensePatterns = [
     /(?:dl|lic|license)\s*(?:no|num|#)?\s*[:.]?\s*([A-Z0-9]+)/i,
     /No\s*\.?\s*([A-Z0-9]{8,15})/, 
@@ -305,8 +278,6 @@ export const parseDrivingLicenseData = (text) => {
   };
 };
 
-// --- 6. Validation Logic (Name + ID only) ---
-
 export const validateData = (formData, ocrData) => {
   const results = {
     nameMatch: false,
@@ -323,44 +294,33 @@ export const validateData = (formData, ocrData) => {
 
   if (!hasDocument) return results;
 
-  // 1. Name Matching
-  if (formData.name && ocrData.name) {
-    results.nameMatch = exactMatch(formData.name, ocrData.name) || fuzzyMatch(formData.name, ocrData.name);
-    console.log('=== Name Comparison ===');
-    console.log('Input:', formData.name);
-    console.log('OCR:', ocrData.name);
-    console.log('Match:', results.nameMatch);
+  results.nameMatch = false;
+  results.licenseMatch = false;
+  results.passportMatch = false;
+
+  if (formData.name && ocrData.name && formData.name.trim() && ocrData.name.trim()) {
+    const normalizedFormName = normalize(formData.name);
+    const normalizedOcrName = normalize(ocrData.name);
+    results.nameMatch = normalizedFormName === normalizedOcrName || 
+                        normalizedFormName.includes(normalizedOcrName) || 
+                        normalizedOcrName.includes(normalizedFormName);
   }
 
-  // 2. ID Matching
-  if (hasLicense && ocrData.licenseNumber) {
+  if (hasLicense && ocrData.licenseNumber && formData.licenseNumber) {
     results.licenseMatch = exactMatch(formData.licenseNumber, ocrData.licenseNumber);
-    console.log('=== License Comparison ===');
-    console.log('Input:', formData.licenseNumber);
-    console.log('OCR:', ocrData.licenseNumber);
-    console.log('Match:', results.licenseMatch);
   }
 
-  if (hasPassport && ocrData.passportNumber) {
+  if (hasPassport && ocrData.passportNumber && formData.passportNumber) {
     results.passportMatch = exactMatch(formData.passportNumber, ocrData.passportNumber);
-    console.log('=== Passport Comparison ===');
-    console.log('Input:', formData.passportNumber);
-    console.log('OCR:', ocrData.passportNumber);
-    console.log('Match:', results.passportMatch);
   }
 
-  results.idMatch = (hasLicense && results.licenseMatch) || (hasPassport && results.passportMatch);
-
-  // 3. Final Logic - Only Name + ID (no DOB)
   if (hasLicense && hasPassport) {
     results.allMatch = results.licenseMatch && results.passportMatch && results.nameMatch;
-  } else {
-    const hasId = hasLicense ? results.licenseMatch : results.passportMatch;
-    results.allMatch = hasId && results.nameMatch;
+  } else if (hasLicense) {
+    results.allMatch = results.licenseMatch && results.nameMatch;
+  } else if (hasPassport) {
+    results.allMatch = results.passportMatch && results.nameMatch;
   }
-
-  console.log('=== Final Result ===');
-  console.log('All Match:', results.allMatch);
 
   return results;
 };

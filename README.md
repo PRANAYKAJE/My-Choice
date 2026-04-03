@@ -1,5 +1,7 @@
 # My Choice Task
 
+Demo: https://my-choice-khaki.vercel.app/
+
 A React-based self-exclusion form application for responsible gambling, featuring facial recognition verification and OCR document scanning.
 
 ## How to Run

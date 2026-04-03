@@ -64,16 +64,6 @@ const SelfExclusionForm = () => {
       licenseDateOfBirth: extractedData.dateOfBirth || prev.licenseDateOfBirth,
       hasDrivingLicense: true,
     }));
-
-    if (extractedData.name) {
-      setFormData((prev) => ({ ...prev, name: extractedData.name }));
-    }
-    if (extractedData.licenseNumber) {
-      setFormData((prev) => ({ ...prev, licenseNumber: extractedData.licenseNumber }));
-    }
-    if (extractedData.dateOfBirth) {
-      setFormData((prev) => ({ ...prev, dateOfBirth: extractedData.dateOfBirth }));
-    }
   };
 
   const handlePassportUpload = (file, extractedText, extractedData) => {
@@ -84,16 +74,6 @@ const SelfExclusionForm = () => {
       passportDateOfBirth: extractedData.dateOfBirth || prev.passportDateOfBirth,
       hasPassport: true,
     }));
-
-    if (extractedData.name && !formData.name) {
-      setFormData((prev) => ({ ...prev, name: extractedData.name }));
-    }
-    if (extractedData.passportNumber) {
-      setFormData((prev) => ({ ...prev, passportNumber: extractedData.passportNumber }));
-    }
-    if (extractedData.dateOfBirth && !formData.dateOfBirth) {
-      setFormData((prev) => ({ ...prev, dateOfBirth: extractedData.dateOfBirth }));
-    }
   };
 
   const computedVerification = useMemo(() => {
@@ -126,6 +106,10 @@ const SelfExclusionForm = () => {
     const hasDocument = ocrData.hasDrivingLicense || ocrData.hasPassport;
     if (!hasDocument) {
       newErrors.document = "Please upload your Driving Licence or Passport";
+    }
+
+    if (hasDocument && !isVerified) {
+      newErrors.document = "Entered details do not match uploaded document";
     }
 
     if (Object.keys(newErrors).length > 0) {

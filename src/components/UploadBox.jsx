@@ -50,12 +50,6 @@ const UploadBox = ({ label, onDataExtracted }) => {
           ? parsePassportData(text) 
           : parseDrivingLicenseData(text);
         
-        console.log('=== OCR Extracted Data ===');
-        console.log('Type:', isPassport ? 'Passport' : 'Driving License');
-        console.log('Name:', data.name || 'Not detected');
-        console.log('Document Number:', data.licenseNumber || data.passportNumber || 'Not detected');
-        console.log('DOB:', data.dateOfBirth || 'Not detected');
-        
         setExtractedData(data);
         
         if (onDataExtracted) {
