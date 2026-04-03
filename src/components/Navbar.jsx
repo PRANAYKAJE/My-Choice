@@ -53,21 +53,7 @@ const Navbar = () => {
             })}
           </div>
 
-          <div className="md:hidden flex items-center gap-3">
-            <div className="flex gap-2">
-              {socialIcons.slice(0, 2).map((item, i) => {
-                const IconComponent = item.Icon;
-                return (
-                  <a
-                    key={i}
-                    href={item.href}
-                    className="bg-green-500 p-2 rounded-full hover:bg-green-600 cursor-pointer transition-colors"
-                  >
-                    <IconComponent size={12} />
-                  </a>
-                );
-              })}
-            </div>
+          <div className="md:hidden flex items-center gap-3 ml-auto">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="text-white p-2"
@@ -90,6 +76,20 @@ const Navbar = () => {
                 </li>
               ))}
             </ul>
+            <div className="flex justify-center gap-3 mt-4 pt-4 border-t border-gray-700">
+              {socialIcons.map((item, i) => {
+                const IconComponent = item.Icon;
+                return (
+                  <a
+                    key={i}
+                    href={item.href}
+                    className="bg-green-500 p-2 rounded-full hover:bg-green-600 cursor-pointer transition-colors"
+                  >
+                    <IconComponent size={14} />
+                  </a>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>
