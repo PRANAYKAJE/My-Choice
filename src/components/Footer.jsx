@@ -39,13 +39,11 @@ const Footer = () => {
             </ul>
           </div>
         </div>
-
-        <div className="mt-8 md:mt-10 border-t border-gray-700 text-center py-4 text-sm">
-          <p>Copyright {currentYear} MyChoice</p>
-        </div>
       </div>
 
-      <div className="h-1 bg-gradient-to-r from-green-600 to-green-400" />
+      <div className="w-full text-center py-3 sm:py-4 px-4 text-xs sm:text-sm" style={{ backgroundColor: colors.primary }}>
+        <p>Copyright {currentYear} MyChoice</p>
+      </div>
     </footer>
   );
 };
